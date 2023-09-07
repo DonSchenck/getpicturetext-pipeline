@@ -1,0 +1,35 @@
+
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: qotd-app
+spec:
+  params:
+  - name: qotd-git
+    description: The git repository url
+  - name: git-repo-name
+    description: The name of the deployment to be created / patched
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      name: qotd-build-and-deploy-$(uid)
+    spec:
+      serviceAccountName: pipeline
+      pipelineRef:
+        name: qotd-build-and-deploy
+      workspaces:
+      - name: output
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 900Mi
+      params:
+      - name: qotd-git
+        value: $(params.qotd-git)
+      - name: qotd-image
+        value: image-registry.openshift-image-registry.svc:5000/trigger-demo/$(params.git-repo-name):latest
+        
